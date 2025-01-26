@@ -1,0 +1,40 @@
+# Ignore Python virtual environments
+venv/
+.venv/
+django-venv/
+*.pyc
+__pycache__/
+
+# Ignore Django migration files
+migrations/
+
+# Ignore version control system files
+.git/
+.gitignore
+
+# Ignore Dockerignore itself (optional)
+.dockerignore
+
+# Ignore IDE/editor configuration files
+*.vscode/
+*.idea/
+
+# Ignore log files
+*.log
+
+# Ignore temporary files and directories
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+*.bk
+*.md
+Thumbs.db
+
+# Ignore test directories and files
+tests/
+*.test
+
+# Ignore local settings and sensitive files
+.env
+local_settings.py

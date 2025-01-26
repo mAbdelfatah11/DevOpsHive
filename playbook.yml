@@ -1,0 +1,18 @@
+---
+- name: Container and image create and clean
+  hosts: localhost
+  tasks:
+  - name: delete current container
+    command: sudo docker rm -f django-job-board
+    ignore_errors: yes
+
+  - name: delete current unused image
+    command: sudo docker rmi django-img
+    ignore_errors: yes
+
+  - name: build django-img
+    command: sudo docker build -t django-img .
+
+
+  - name: run django-job-board container
+    command: sudo docker run -d --name django-job-board -p 8080:8000 django-img

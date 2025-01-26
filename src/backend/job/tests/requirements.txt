@@ -1,0 +1,5 @@
+# Dependencies for the Testing framework
+
+nose		# test runner
+Pinocchio	# give color verbosity in output
+coverage	# add coverage percentage in output

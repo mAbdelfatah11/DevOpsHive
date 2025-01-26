@@ -1,0 +1,111 @@
+name: ci pipeline for django-job-board application
+
+on:
+  workflow_dispatch: 
+  push:  
+
+env:
+  AWS_REGION: us-east-1
+  
+jobs:
+  Unit-Testing:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v4 
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: |
+        cd Projects/django-job-board
+        make setup
+        make install
+    - name: lint code
+      run: |
+        cd Projects/django-job-board
+        make lint
+    - name: unit-testing for Job application
+      run: | 
+        cd Projects/django-job-board
+        make test      
+    
+  Docker-Build:
+    runs-on: ubuntu-latest
+    needs: [Unit-Testing]
+    steps:
+    # - name: checkout code
+    #   uses: actions/checkout@v4 
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+       username: ${{ vars.DOCKERHUB_USERNAME }}
+       password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build Docker Image
+      uses: docker/build-push-action@v6
+      with:
+        context: "{{defaultContext}}:./Projects/django-job-board"
+        push: false
+        tags: ${{ vars.DOCKERHUB_USERNAME }}/django-job-board:${{ github.sha }}
+    
+    - name: Test Docker Image
+      run: | 
+        docker images
+        docker run -d --name django-job-board -p 8000:8000 ${{ vars.DOCKERHUB_USERNAME }}/django-job-board:${{ github.sha }}
+        
+        export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' django-job-board )
+        echo $IP
+
+        echo Testing Image URL using wget
+        wget -q -O - http://127.0.0.1:8000/jobs/ | grep "Jobs Available"
+
+  deploy:
+    name: Deployment on EKS
+    # needs: Docker-Build
+    runs-on: ubuntu-latest
+    steps:
+    # - name: Set short git commit SHA
+    #   id: commit
+    #   uses: prompt/actions-commit-hash@v2
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v4
+      with:
+        version: 'v1.28.0' # equal to EKS-Cluster k8s version
+
+    # the following did not work as github actions does not define a specific aws cli profile to use in kbeconfig
+    # - name: Configure AWS credentials
+    #   uses: aws-actions/configure-aws-credentials@v4
+    #   with:
+    #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     aws-region: ${{ env.AWS_REGION }}
+
+    # set the aws profile for access entry who thier aws cli profile name will be refernced in the kubeconfig
+    - name: set aws profile
+      run: | 
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} --profile default
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile default
+        aws configure set region ${{ env.AWS_REGION }} --profile default
+
+    - name: Verify AWS CLI Configuration
+      run: |
+        aws sts get-caller-identity
+
+    # kubeconfig secret references the cluster-admin aws cli profile in the users list
+    - name: Configure kubeconfig
+      uses: azure/k8s-set-context@v4
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBECONFIG }}
+
+    - name: test EKS connectivity
+      run: | 
+        kubectl get nodes
+        kubectl auth whoami

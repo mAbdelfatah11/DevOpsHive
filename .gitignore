@@ -1,0 +1,12 @@
+# Exclude any directory virtualenv at any level
+venv/
+django-venv/
+
+migrations/
+__pycache__/
+*.pyc
+*.bk
+
+TestProject/
+**/TestProject/
+
