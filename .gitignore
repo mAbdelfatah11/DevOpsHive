@@ -6,7 +6,4 @@ migrations/
 __pycache__/
 *.pyc
 *.bk
-
-TestProject/
-**/TestProject/
-
+.env

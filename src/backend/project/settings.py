@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+from decouple import config         # to load .env
+
 
 # Base dir absolute path relative to the settings.py file
 # TEMPLATES, DATABASES and STATICFILES directives use this BASE_DIR to refernce thier actual directories
@@ -18,17 +20,18 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
+# SECRET_KEY ensures that session cookies, tokens, and other signed data cannot be tampered
+# Exampe:  When a user logs into your application, Django creates a session ID and stores it in a cookie. This cookie is signed with the SECRET_KEY.
+SECRET_KEY = config("DJANGO_SECRET_KEY")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 's8e4)(@2uihnctsrz2mhct*fdah%^vs!7&-l6((h1u8=5abo@h'
+# If DJANGO_ENV is set to "Development", DEBUG becomes True, else it set to False
+# Best practices: disable debugging in production, security wise
+DEBUG = config("DJANGO_ENV", default="Production") == "Development"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-# allow any host server to reach app from its IP
-ALLOWED_HOSTS = ['*']
+# always restrict access to the domain or server where you are serving your application, the default here is "*"
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='*').split(',')
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -147,7 +150,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "..", "media")
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'pythondeveloper6@gmail.com'
-EMAIL_HOST_PASSWORD = 'kcpnwirvkmagqrlr'
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')     # .env
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD') #.env
 EMAIL_USE_TLS = True
 EMAIL_PORT = '587'

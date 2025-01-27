@@ -20,16 +20,13 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd Projects/django-job-board
         make setup
         make install
     - name: lint code
       run: |
-        cd Projects/django-job-board
         make lint
     - name: unit-testing for Job application
       run: | 
-        cd Projects/django-job-board
         make test      
     
   Docker-Build:
